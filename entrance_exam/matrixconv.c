@@ -24,7 +24,7 @@ enum {
 
 // Matrices A, B and C of size h * w.
 // Each matrix has its own buffer.
-// value of matrix ch at (row, col) is data[ch][row * w + col].
+// Value of matrix ch at (row, col) is data[ch][row * w + col].
 typedef struct {
     uint32_t h;
     uint32_t w;
@@ -90,9 +90,13 @@ static int parse_args(int argc, char *argv[],
 static int image_alloc(image_t *img) {
     size_t size = (size_t)img->h * img->w;
 
+    // malloc(0) may return NULL, so we always ask for at least 1 byte.
+    if (size == 0) {
+        size = 1;
+    }
+
     for (int ch = 0; ch < CHANNELS; ch++) {
-        // malloc(0) may return NULL, so we always ask for at least 1 byte.
-        img->data[ch] = malloc(size > 0 ? size : 1);
+        img->data[ch] = malloc(size);
         if (img->data[ch] == NULL) {
             DEBUG_PRINT("Cannot allocate %zu bytes for a matrix\n", size);
             return RC_NO_MEMORY;
@@ -230,11 +234,13 @@ static void convolve(const uint8_t *src, uint8_t *dst,
     for (int64_t row = 0; row < h; row++) {
         // Kernel rows i in [i_from, i_to) fall inside the matrix.
         // Rows outside give 0, so we skip them instead of checking each value.
+        // i_from = max(0, cy - row) ; i_to = min(kh, h - row + cy)
         const int64_t i_from = (cy > row) ? cy - row : 0;
         const int64_t i_to = (h - row + cy < kh) ? h - row + cy : kh;
 
         for (int64_t col = 0; col < w; col++) {
             // The same for kernel columns j in [j_from, j_to).
+            // j_from = max(0, cx - col) ; j_to = min(kw, w - col + cx)
             const int64_t j_from = (cx > col) ? cx - col : 0;
             const int64_t j_to = (w - col + cx < kw) ? w - col + cx : kw;
             const int64_t len = j_to - j_from;
