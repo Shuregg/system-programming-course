@@ -40,9 +40,9 @@ typedef struct {
 
 // Get file names from -i and -o options.
 // Both "-i file" and "-ifile" forms are accepted, in any order.
+// If got "-i"/"-o" several times, it will be used the latest file name.
 static int parse_args(int argc, char *argv[],
-                      const char **input_name, const char **output_name)
-{
+                      const char **input_name, const char **output_name) {
     *input_name = NULL;
     *output_name = NULL;
 
@@ -85,8 +85,8 @@ static int parse_args(int argc, char *argv[],
     return RC_OK;
 }
 
-// Allocate buffers for all matrices of img. img->h and img->w must be set.
-// On error the caller must still call image_free().
+// Allocate buffers for all matrices of img.
+// img->h and img->w must be set.
 static int image_alloc(image_t *img) {
     size_t size = (size_t)img->h * img->w;
 
@@ -152,7 +152,6 @@ static int read_matrices(FILE *file, image_t *img) {
 }
 
 // Read matrices A, B, C and kernel D.
-// On error the caller must still call image_free(img) and free(ker->data).
 static int read_input(FILE *file, image_t *img, kernel_t *ker) {
     *img = (image_t){0};
     *ker = (kernel_t){0};
@@ -186,7 +185,7 @@ static int read_input(FILE *file, image_t *img, kernel_t *ker) {
     }
     DEBUG_PRINT("DH = %u, DW = %u\n", ker->h, ker->w);
 
-    // The kernel must have a center, so both sizes must be odd.
+    // The kernel must have a center, so both sizes must be odd (task condition)
     if (ker->h % 2 == 0 || ker->w % 2 == 0) {
         DEBUG_PRINT("DH and DW must be odd\n");
         return RC_BAD_INPUT;
@@ -219,7 +218,7 @@ static uint8_t normalize(int64_t sum) {
     return (uint8_t)sum;
 }
 
-// Apply kernel 'ker' to one matrix 'src' of size height x width
+// Apply kernel 'ker' to one matrix 'src' of size height * width
 // and write the result to 'dst'. Values outside the matrix are 0.
 static void convolve(const uint8_t *src, uint8_t *dst,
                      uint32_t height, uint32_t width, const kernel_t *ker) {
@@ -233,7 +232,7 @@ static void convolve(const uint8_t *src, uint8_t *dst,
 
     for (int64_t row = 0; row < h; row++) {
         // Kernel rows i in [i_from, i_to) fall inside the matrix.
-        // Rows outside give 0, so we skip them instead of checking each value.
+        // Rows outside give 0 (task condition), so we skip them instead of checking each value.
         // i_from = max(0, cy - row) ; i_to = min(kh, h - row + cy)
         const int64_t i_from = (cy > row) ? cy - row : 0;
         const int64_t i_to = (h - row + cy < kh) ? h - row + cy : kh;
@@ -352,6 +351,7 @@ int main(int argc, char *argv[]) {
         rc = write_output(output_name, &dst);
     }
 
+    // Always free allocated memory even if return code is not 0.
     image_free(&src);
     free(ker.data);
     image_free(&dst);
