@@ -40,7 +40,7 @@ typedef struct {
 
 // Get file names from -i and -o options.
 // Both "-i file" and "-ifile" forms are accepted, in any order.
-// If got "-i"/"-o" several times, it will be used the latest file name.
+// If -i or -o is given several times, the last file name is used.
 static int parse_args(int argc, char *argv[],
                       const char **input_name, const char **output_name) {
     *input_name = NULL;
