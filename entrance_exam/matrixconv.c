@@ -51,6 +51,7 @@ static int parse_args(int argc, char *argv[],
         const char **target;
 
         if (arg[0] != '-') {
+            DEBUG_PRINT("Unexpected argument '%s'\n", arg);
             return RC_ARGS;
         }
         switch (arg[1]) {
@@ -61,7 +62,7 @@ static int parse_args(int argc, char *argv[],
             target = output_name;
             break;
         default:
-            // Unknown option.
+            DEBUG_PRINT("Unknown option '%s'\n", arg);
             return RC_ARGS;
         }
 
@@ -71,7 +72,7 @@ static int parse_args(int argc, char *argv[],
             i++;
             *target = argv[i];
         } else {
-            // Option without a value.
+            DEBUG_PRINT("Option '%s' needs a file name\n", arg);
             return RC_ARGS;
         }
     }
