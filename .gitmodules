@@ -1,0 +1,3 @@
+[submodule "edu-practice"]
+	path = edu-practice
+	url = git@github.com:Shuregg/edu-practice.git
